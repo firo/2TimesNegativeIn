@@ -6,4 +6,4 @@ L'applicazione scarica i dati storici dei titoli selezionati e li elabora per in
 
 Visualizza i risultati in un formato tabellare e fornisce l'opzione di scaricare i risultati in CSV. Se il ticker non ha dati disponibili, visualizza un messaggio di errore.
 
-provalo ora qui: https://firo-2timesnegativein.streamlit.app/
+Provalo ora qui: https://firo-2timesnegativein.streamlit.app/
