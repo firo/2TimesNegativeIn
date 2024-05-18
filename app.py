@@ -57,14 +57,14 @@ if tickers_input:
                 latest_close = data['Close'].iloc[-1]
                 
                 if last_date == yesterday_str:
-                    result = "**Risultato per {ticker}: Positivo**"
+                    result = f"**Risultato per {ticker}: Positivo**"
                 else:
-                    result = "**Risultato per {ticker}: Negativo**"
+                    result = f"**Risultato per {ticker}: Negativo**"
                     # Calcolare il delta percentuale
                     delta_percent = ((latest_close - last_close_negative) / last_close_negative) * 100
                     st.write(f"Delta percentuale rispetto all'ultima chiusura negativa consecutiva: {delta_percent:.2f}%")
             else:
-                result = "**Risultato per {ticker}: Nessuna chiusura negativa consecutiva trovata**"
+                result = f"**Risultato per {ticker}: Nessuna chiusura negativa consecutiva trovata**"
             
             # Mostrare il risultato in grassetto
             st.markdown(result)
