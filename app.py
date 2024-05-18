@@ -1,21 +1,26 @@
 import streamlit as st
 import yfinance as yf
 import pandas as pd
+from datetime import datetime, timedelta
 
 # Titolo dell'app
 st.title('Indagine su Chiusure Negative Consecutive di Titoli Azionari')
 
 # Input per i ticker dei titoli azionari separati da virgole
-tickers_input = st.text_input('Inserisci i ticker dei titoli azionari separati da virgole', 'AAPL, CRM, GOOGL')
+tickers_input = st.text_input('Inserisci i ticker dei titoli azionari separati da virgole', 'AAPL, MSFT, GOOGL')
 
 # Data di inizio e fine per il download dei dati
-start_date = st.date_input('Data di inizio', pd.to_datetime('2024-01-01'))
+start_date = st.date_input('Data di inizio', pd.to_datetime('2020-01-01'))
 end_date = st.date_input('Data di fine', pd.to_datetime('today'))
 
 # Se l'utente ha inserito dei ticker
 if tickers_input:
     # Suddividi l'input in una lista di ticker
     tickers = [ticker.strip().upper() for ticker in tickers_input.split(',')]
+    
+    # Calcola la data di ieri
+    yesterday = datetime.now() - timedelta(days=1)
+    yesterday_str = yesterday.strftime('%Y-%m-%d')
     
     # Itera su ciascun ticker
     for ticker in tickers:
@@ -41,6 +46,25 @@ if tickers_input:
             st.write(f'Date con due chiusure negative consecutive per {ticker}')
             st.dataframe(consecutive_negatives)
 
+            # Determinare il risultato
+            if not consecutive_negatives.empty:
+                last_date = consecutive_negatives.index[-1].strftime('%Y-%m-%d')
+                last_close_negative = consecutive_negatives['Close'].iloc[-1]
+                latest_close = data['Close'].iloc[-1]
+                
+                if last_date == yesterday_str:
+                    result = "Positivo"
+                else:
+                    result = "Negativo"
+                    # Calcolare il delta percentuale
+                    delta_percent = ((latest_close - last_close_negative) / last_close_negative) * 100
+                    st.write(f"Delta percentuale rispetto all'ultima chiusura negativa consecutiva: {delta_percent:.2f}%")
+            else:
+                result = "Nessuna chiusura negativa consecutiva trovata"
+            
+            # Mostrare il risultato
+            st.write(f'Risultato per {ticker}: {result}')
+            
             # Opzione per scaricare i risultati
             csv = consecutive_negatives.to_csv().encode('utf-8')
             st.download_button(
