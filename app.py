@@ -9,7 +9,7 @@ st.title('Indagine su Chiusure Negative Consecutive di Titoli Azionari')
 tickers_input = st.text_input('Inserisci i ticker dei titoli azionari separati da virgole', 'AAPL, CRM, GOOGL')
 
 # Data di inizio e fine per il download dei dati
-start_date = st.date_input('Data di inizio', pd.to_datetime('2020-01-01'))
+start_date = st.date_input('Data di inizio', pd.to_datetime('2024-01-01'))
 end_date = st.date_input('Data di fine', pd.to_datetime('today'))
 
 # Se l'utente ha inserito dei ticker
