@@ -3,6 +3,12 @@ import yfinance as yf
 import pandas as pd
 from datetime import datetime, timedelta
 
+# Carica i ticker dei componenti da un file CSV
+def load_ticker_group(file):
+    df = pd.read_csv(file)
+    tickers = df['Ticker'].tolist()
+    return tickers
+
 # Calcolare la data di inizio come il primo giorno dell'anno corrente
 current_year = datetime.now().year
 start_date_default = datetime(current_year, 1, 1)
@@ -10,29 +16,41 @@ start_date_default = datetime(current_year, 1, 1)
 # Titolo dell'app
 st.title('Indagine su Chiusure Negative Consecutive di Titoli Azionari')
 
-# Input per i ticker dei titoli azionari separati da virgole
-tickers_input = st.text_input('Inserisci i ticker dei titoli azionari separati da virgole', 'AAPL, MSFT, GOOGL')
+# Input per i ticker dei titoli azionari o il caricamento di un file CSV con i ticker
+ticker_source = st.radio('Scegli la fonte dei ticker:', ['Inserimento manuale', 'Caricamento da file CSV'])
+
+if ticker_source == 'Inserimento manuale':
+    # Inserimento manuale di default
+    default_tickers = ['GOOGL', 'AAPL', 'MSFT', 'CRM']
+    tickers_input = st.text_area('Inserisci i ticker dei titoli azionari separati da virgole o il codice di un indice (separati da virgole)', ', '.join(default_tickers))
+    tickers = [ticker.strip().upper() for ticker in tickers_input.split(',') if ticker.strip()]
+else:
+    ticker_file = st.file_uploader('Carica un file CSV con i ticker. Il file deve contenere un intestazione chiamata "Ticker".', type=['csv'])
+    if ticker_file is not None:
+        tickers = load_ticker_group(ticker_file)
+    else:
+        tickers = []
 
 # Data di inizio e fine per il download dei dati
 start_date = st.date_input('Data di inizio', start_date_default)
 end_date = st.date_input('Data di fine', pd.to_datetime('today'))
 
-# Se l'utente ha inserito dei ticker
-if tickers_input:
-    # Suddividi l'input in una lista di ticker
-    tickers = [ticker.strip().upper() for ticker in tickers_input.split(',')]
-    
+# Se sono stati forniti dei ticker
+if tickers:
     # Calcola la data di ieri
     yesterday = datetime.now() - timedelta(days=1)
     yesterday_str = yesterday.strftime('%Y-%m-%d')
-    
+
     # Itera su ciascun ticker
     for ticker in tickers:
-        st.subheader(f'Dati per {ticker}')
-        
+
+        ticker_info = yf.Ticker(ticker)
+        company_name = ticker_info.info['longName']
+        st.subheader(f'Dati per {company_name} ({ticker})')
+
         # Scaricare i dati storici del titolo azionario
         data = yf.download(ticker, start=start_date, end=end_date)
-        
+
         if not data.empty:
             # Aggiungere una colonna per le variazioni percentuali giornaliere
             data['Daily Change'] = data['Close'].pct_change()
@@ -55,9 +73,9 @@ if tickers_input:
                 last_date = consecutive_negatives.index[-1].strftime('%Y-%m-%d')
                 last_close_negative = consecutive_negatives['Close'].iloc[-1]
                 latest_close = data['Close'].iloc[-1]
-                
+
                 if last_date == yesterday_str:
-                    result = f"**Risultato per {ticker}: Positivo**"
+                    result = f"<span style='color:green'>**Risultato per {ticker}: Positivo**</span>"
                 else:
                     result = f"**Risultato per {ticker}: Negativo**"
                     # Calcolare il delta percentuale
@@ -65,10 +83,11 @@ if tickers_input:
                     st.write(f"Delta percentuale rispetto all'ultima chiusura negativa consecutiva: {delta_percent:.2f}%")
             else:
                 result = f"**Risultato per {ticker}: Nessuna chiusura negativa consecutiva trovata**"
-            
-            # Mostrare il risultato in grassetto
-            st.markdown(result)
-            
+
+            # Mostrare il risultato in grassetto e in verde se positivo
+            st.markdown(result, unsafe_allow_html=True)
+
+
             # Opzione per scaricare i risultati
             csv = consecutive_negatives.to_csv().encode('utf-8')
             st.download_button(
