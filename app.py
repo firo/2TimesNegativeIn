@@ -2,6 +2,7 @@ import streamlit as st
 import yfinance as yf
 import pandas as pd
 from datetime import datetime, timedelta
+from streamlit_extras.buy_me_a_coffee import button 
 
 # Carica i ticker dei componenti da un file CSV
 def load_ticker_group(file):
@@ -15,6 +16,8 @@ start_date_default = datetime(current_year, 1, 1)
 
 # Titolo dell'app
 st.title('Indagine su Chiusure Negative Consecutive di Titoli Azionari')
+
+button(username="firo", floating=True, width=221)
 
 # Input per i ticker dei titoli azionari o il caricamento di un file CSV con i ticker
 ticker_source = st.radio('Scegli la fonte dei ticker:', ['Inserimento manuale', 'Caricamento da file CSV'])
