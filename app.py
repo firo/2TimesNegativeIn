@@ -38,7 +38,19 @@ end_date = st.date_input('Data di fine', pd.to_datetime('today'))
 # Se sono stati forniti dei ticker
 if tickers:
     # Calcola la data di ieri
-    yesterday = datetime.now() - timedelta(days=1)
+
+    today = datetime.today()
+    day_of_week = today.weekday()
+    
+    if day_of_week == 6:  # se Domenica (6)
+        yesterday = datetime.now() - timedelta(days=2)
+
+    elif day_of_week == 0: # se Lunedì (0)
+        yesterday = datetime.now() - timedelta(days=3)
+
+    else: # per tutti gli altri giorni, anche per sabato
+        yesterday = datetime.now() - timedelta(days=1)
+
     yesterday_str = yesterday.strftime('%Y-%m-%d')
 
     # Itera su ciascun ticker
@@ -66,7 +78,7 @@ if tickers:
 
             # Visualizzare i risultati
             st.write(f'Date con due chiusure negative consecutive per {ticker}')
-            st.dataframe(consecutive_negatives)
+            st.dataframe(consecutive_negatives.tail())
 
             # Determinare il risultato
             if not consecutive_negatives.empty:
