@@ -10,12 +10,35 @@ def load_ticker_group(file):
     tickers = df['Ticker'].tolist()
     return tickers
 
+# Funzione per calcolare l'RSI
+def calculate_rsi(data, window=14):
+    delta = data['Close'].diff()
+    gain = (delta.where(delta > 0, 0)).rolling(window=window).mean()
+    loss = (-delta.where(delta < 0, 0)).rolling(window=window).mean()
+    rs = gain / loss
+    rsi = 100 - (100 / (1 + rs))
+    return rsi
+
+# Funzione per calcolare il MACD
+def calculate_macd(data, short_window=12, long_window=26, signal_window=9):
+    short_ema = data['Close'].ewm(span=short_window, adjust=False).mean()
+    long_ema = data['Close'].ewm(span=long_window, adjust=False).mean()
+    macd = short_ema - long_ema
+    signal = macd.ewm(span=signal_window, adjust=False).mean()
+    return macd, signal
+
 # Calcolare la data di inizio come il primo giorno dell'anno corrente
 current_year = datetime.now().year
 start_date_default = datetime(current_year, 1, 1)
 
 # Titolo dell'app
 st.title('Indagine su Chiusure Negative Consecutive di Titoli Azionari')
+
+# Avvertimento legale
+st.markdown("""
+**Disclaimer:**
+Questa applicazione è realizzata a scopo didattico per testare le funzionalità di Python e le librerie utilizzate. Non deve essere utilizzata come strumento finanziario su cui basare le proprie strategie di investimento. L'autore non si assume alcuna responsabilità per eventuali decisioni finanziarie prese sulla base delle informazioni fornite da questa applicazione.
+""")
 
 button(username="firo", floating=True, width=221)
 
@@ -60,7 +83,7 @@ if tickers:
     for ticker in tickers:
 
         ticker_info = yf.Ticker(ticker)
-        company_name = ticker_info.info['longName']
+        company_name = ticker_info.info.get('longName', ticker)
         st.subheader(f'Dati per {company_name} ({ticker})')
 
         # Scaricare i dati storici del titolo azionario
@@ -72,6 +95,51 @@ if tickers:
 
             # Aggiungere una colonna per indicare se la chiusura è stata negativa
             data['Negative Close'] = data['Daily Change'] < 0
+
+            # Calcolare RSI e MACD
+            data['RSI'] = calculate_rsi(data)
+            data['MACD'], data['Signal'] = calculate_macd(data)
+
+            # Determinare il trend basato su RSI
+            rsi_value = data['RSI'].iloc[-1]
+            if rsi_value > 70:
+                rsi_trend = 'Il titolo potrebbe essere in una condizione di ipercomprato e potrebbe essere pronto per una correzione al ribasso.'
+            elif rsi_value < 30:
+                rsi_trend = 'Il titolo potrebbe essere in una condizione di ipervenduto e potrebbe essere pronto per un rimbalzo al rialzo.'
+            elif rsi_value > 50:
+                rsi_trend = 'Indica una tendenza rialzista, specialmente se l\'RSI sta aumentando.'
+            else:
+                rsi_trend = 'Il titolo è in una condizione neutra.'
+
+            # Determinare il trend basato su MACD
+            macd_value = data['MACD'].iloc[-1]
+            signal_value = data['Signal'].iloc[-1]
+            if macd_value > signal_value and macd_value > 0:
+                macd_trend = 'Il titolo è in una tendenza rialzista (MACD sopra la linea del segnale e sopra lo zero).'
+            elif macd_value < signal_value and macd_value < 0:
+                macd_trend = 'Il titolo è in una tendenza ribassista (MACD sotto la linea del segnale e sotto lo zero).'
+            elif macd_value > signal_value:
+                macd_trend = 'Segnale rialzista (MACD ha incrociato sopra la linea del segnale).'
+            else:
+                macd_trend = 'Segnale ribassista (MACD ha incrociato sotto la linea del segnale).'
+
+            # Logica per determinare il trend finale
+            if rsi_value > 50 and macd_value > signal_value:
+                final_trend = f"<span style='color:green'>Risultato trend: Rialzista</span>"
+            elif rsi_value < 50 and macd_value < signal_value:
+                final_trend = f"<span style='color:red'>Risultato trend: Ribassista</span>"
+            else:
+                final_trend = "Risultato trend: Neutrale"
+
+            # Visualizzare il risultato del trend
+            st.markdown(final_trend, unsafe_allow_html=True)
+
+            # Visualizzare i risultati RSI e MACD
+            st.write(f"RSI per {ticker}: {rsi_value:.2f}")
+            st.write(f"Interpretazione RSI: {rsi_trend}")
+            st.write(f"MACD per {ticker}: {macd_value:.2f}")
+            st.write(f"Signal Line per {ticker}: {signal_value:.2f}")
+            st.write(f"Interpretazione MACD: {macd_trend}")
 
             # Individuare due chiusure negative consecutive
             data['Two Consecutive Negatives'] = data['Negative Close'] & data['Negative Close'].shift(1)
@@ -101,7 +169,6 @@ if tickers:
 
             # Mostrare il risultato in grassetto e in verde se positivo
             st.markdown(result, unsafe_allow_html=True)
-
 
             # Opzione per scaricare i risultati
             csv = consecutive_negatives.to_csv().encode('utf-8')
