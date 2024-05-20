@@ -1,6 +1,6 @@
 # 2 Times Negative In
 
-Questo è un'applicazione web creata con Streamlit che consente l'utente di inserire i ticker dei titoli azionari separati da virgole e di scegliere la data di inizio e fine per il download dei dati storici. 
+Questo è un'applicazione web, che consente l'utente di inserire i ticker dei titoli azionari separati da virgole e di scegliere la data di inizio e fine per il download dei dati storici. 
 
 L'applicazione scarica i dati storici dei titoli selezionati e li elabora per individuare le chiusure negative consecutive. 
 
