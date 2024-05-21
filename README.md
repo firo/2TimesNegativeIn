@@ -1,5 +1,3 @@
-# 2 Times Negative In
-
 # Indagine su Chiusure Negative Consecutive di Titoli Azionari
 
 **Disclaimer:**
